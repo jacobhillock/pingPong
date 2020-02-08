@@ -44,8 +44,8 @@ def get_segments(score1: int, score2: int):
 
     displays = []
     displays.append(seven_seg(score1[0], int(baseX), baseY, scale))
-    displays.append(seven_seg(score1[1], int(baseX + 57*scale/4), baseY, scale))
-    displays.append(seven_seg(score2[0], int(baseX + 137*scale/4), baseY, scale))
+    displays.append(seven_seg(score1[1], int(baseX + 59*scale/4), baseY, scale))
+    displays.append(seven_seg(score2[0], int(baseX + 135*scale/4), baseY, scale))
     displays.append(seven_seg(score2[1], int(baseX + 194*scale/4), baseY, scale))
 
     return displays
@@ -78,20 +78,20 @@ def main():
         
         if config.get("do_player_switching", True):
             if p1LEFT:
-                textsurface1 = my_font.render(f"Player 1 score {games[0]}", True, (255,255,255))
-                textsurface2 = my_font.render(f"Player 2 score {games[1]}", True, (255,255,255))
-                display.blit(textsurface1, (baseX + 7*scale, baseY + 30*scale))
-                display.blit(textsurface2, (baseX + 7*scale + hWidth, baseY + 30*scale))
+                textsurface1 = my_font.render(f"{config.get('p1','Player 1')} score {games[0]}", True, (255,255,255))
+                textsurface2 = my_font.render(f"{config.get('p2','Player 2')} score {games[1]}", True, (255,255,255))
+                display.blit(textsurface1, (baseX + 9*scale, baseY + 30*scale))
+                display.blit(textsurface2, (baseX + 9*scale + int(hWidth*1.04), baseY + 30*scale))
             else:
-                textsurface2 = my_font.render(f"Player 1 score {games[0]}", True, (255,255,255))
-                textsurface1 = my_font.render(f"Player 2 score {games[1]}", True, (255,255,255))
-                display.blit(textsurface1, (baseX + 7*scale, baseY + 30*scale))
-                display.blit(textsurface2, (baseX + 7*scale+hWidth, baseY + 30*scale))
+                textsurface2 = my_font.render(f"{config.get('p1','Player 1')} score {games[0]}", True, (255,255,255))
+                textsurface1 = my_font.render(f"{config.get('p2','Player 2')} score {games[1]}", True, (255,255,255))
+                display.blit(textsurface1, (baseX + 9*scale, baseY + 30*scale))
+                display.blit(textsurface2, (baseX + 9*scale + int(hWidth*1.04), baseY + 30*scale))
         else:
-            textsurface1 = my_font.render(f"Player 1 score {games[0]}", True, (255,255,255))
-            textsurface2 = my_font.render(f"Player 2 score {games[1]}", True, (255,255,255))
-            display.blit(textsurface1, (baseX + 7*scale, baseY + 30*scale))
-            display.blit(textsurface2, (baseX + 7*scale + hWidth, baseY + 30*scale))
+            textsurface1 = my_font.render(f"{config.get('p1','Player 1')} score {games[0]}", True, (255,255,255))
+            textsurface2 = my_font.render(f"{config.get('p2','Player 2')} score {games[1]}", True, (255,255,255))
+            display.blit(textsurface1, (baseX + 9*scale, baseY + 30*scale))
+            display.blit(textsurface2, (baseX + 9*scale + int(hWidth*1.04), baseY + 30*scale))
 
         pygame.display.update()
 
