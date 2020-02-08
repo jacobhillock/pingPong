@@ -7,6 +7,8 @@
     "font_size": 64,
     "show_server": true,
     "do_player_switching": true,
-    "do_server_tracking": true
+    "do_server_tracking": true,
+    "p1": "Player 1",
+    "p2": "Player 2"
 
 }
