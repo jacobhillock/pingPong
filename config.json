@@ -1,0 +1,12 @@
+{
+    "FPS": 30,
+    "height": 1080,
+    "width": 1920,
+    "win_score": 11,
+    "scale": 30,
+    "font_size": 64,
+    "show_server": true,
+    "do_player_switching": true,
+    "do_server_tracking": true
+
+}
