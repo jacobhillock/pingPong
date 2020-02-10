@@ -28,11 +28,13 @@ size = width, height
 MAX_SCORE = config.get("win_score", 11)
 baseX = 10
 baseY = 10
-scale = config.get("scale", 20)
+scale = config.get("scale", 5)
+if config.get("scaling_mode_auto", False):
+    scale = width * 30 / 1920
 
 init()
 pygame.font.init()
-my_font = pygame.font.SysFont('Nato Mono', config.get("font_size", 48))
+my_font = pygame.font.SysFont('Nato Mono', config.get("font_size", 64))
 
 def get_segments(score1: int, score2: int):
     score1 = str(score1)
@@ -44,10 +46,14 @@ def get_segments(score1: int, score2: int):
         score2 = "0" + score2
 
     displays = []
-    displays.append(seven_seg(score1[0], int(baseX), baseY, scale))
-    displays.append(seven_seg(score1[1], int(baseX + 59*scale/4), baseY, scale))
-    displays.append(seven_seg(score2[0], int(baseX + 135*scale/4), baseY, scale))
-    displays.append(seven_seg(score2[1], int(baseX + 194*scale/4), baseY, scale))
+
+    sfe = int(width*.022) # spacing from the edge of the screen
+    np = int(.55*scale) # number padding
+    nw = 14*scale # number width
+    displays.append(seven_seg(score1[0], sfe, baseY, scale))
+    displays.append(seven_seg(score1[1], sfe + nw + np, baseY, scale))
+    displays.append(seven_seg(score2[0], width - (sfe + 2*nw + np), baseY, scale))
+    displays.append(seven_seg(score2[1], width - (sfe + nw), baseY, scale))
 
     return displays
 
@@ -72,32 +78,43 @@ def main():
         display.fill(black)
         for num in get_segments(scores[0], scores[1]):
             for seg in num:
-                rect = pygame.Rect(seg[0], seg[1], seg[2], seg[3])
+                rect = pygame.Rect(
+                    int(seg[0]),
+                    int(seg[1]),
+                    int(seg[2]),
+                    int(seg[3])
+                )
                 pygame.draw.rect(display, white, rect)
         
         if do_server_tracking:
+            y_off = int(baseY + 27*scale)
             if current_server % 4 == 0 or current_server % 4 == 1:
-                pygame.draw.rect(display, (0, 240, 60), pygame.Rect(baseX, baseY + 27*scale,hWidth-10,30))
+                pygame.draw.rect(display, (0, 240, 60), pygame.Rect(0, y_off,hWidth,30))
             else:
-                pygame.draw.rect(display, (0, 240, 60), pygame.Rect(baseX + hWidth, baseY + 27*scale,hWidth-10,30))
+                pygame.draw.rect(display, (0, 240, 60), pygame.Rect(hWidth, y_off,hWidth,30))
         
+        textsurface1 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
+        textsurface2 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
         if do_player_switching:
-            if p1LEFT:
-                textsurface1 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
-                textsurface2 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-                display.blit(textsurface1, (baseX + 9*scale, baseY + 30*scale))
-                display.blit(textsurface2, (baseX + 9*scale + int(hWidth*1.04), baseY + 30*scale))
-            else:
-                textsurface2 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
+            if not p1LEFT:
                 textsurface1 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-                display.blit(textsurface1, (baseX + 9*scale, baseY + 30*scale))
-                display.blit(textsurface2, (baseX + 9*scale + int(hWidth*1.04), baseY + 30*scale))
-        else:
-            textsurface1 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
-            textsurface2 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-            display.blit(textsurface1, (baseX + 9*scale, baseY + 30*scale))
-            display.blit(textsurface2, (baseX + 9*scale + int(hWidth*1.04), baseY + 30*scale))
+                textsurface2 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
+        display.blit(
+            textsurface1,
+            (
+                int(baseX + 9*scale),
+                int(baseY + 30*scale)
+            )
+        )
+        display.blit(
+            textsurface2,
+            (
+                int(baseX + 9*scale + hWidth*1.04),
+                int(baseY + 30*scale)
+            )
+        )
 
+        pygame.draw.rect(display, (255,255,255), pygame.Rect(hWidth-5,0,10,height))
         pygame.display.update()
 
         # EVENT LOOP
