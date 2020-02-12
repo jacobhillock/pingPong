@@ -95,10 +95,9 @@ def main():
         
         textsurface1 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
         textsurface2 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-        if do_player_switching:
-            if not p1LEFT:
-                textsurface1 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-                textsurface2 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
+        if do_player_switching and not p1LEFT:
+            textsurface1 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
+            textsurface2 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
         display.blit(
             textsurface1,
             (
