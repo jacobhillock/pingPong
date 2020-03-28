@@ -136,24 +136,23 @@ def main():
                 if keys[K_F6] or keys[K_F7]:
                     if scores[0] >= MAX_SCORE or scores[1] >= MAX_SCORE:
                         if p1LEFT or not do_player_switching:
-                            if scores[0] >= MAX_SCORE:
+                            if scores[0] >= MAX_SCORE and scores[0] > scores[1]:
                                 games[0] += 1
-                            else:
+                            elif scores[1] >= MAX_SCORE:
                                 games[1] += 1
                         else:
-                            if scores[0] >= MAX_SCORE:
+                            if scores[0] >= MAX_SCORE and scores[0] > scores[1]:
                                 games[1] += 1
-                            else:
+                            elif scores[1] >= MAX_SCORE:
                                 games[0] += 1
                         if not change and do_player_switching:
                             p1LEFT = not p1LEFT
                         else:
                             start_server += 2
                         start_server %= 4
-                        current_server = start_server
                         change = not change
 
-
+                    current_server = start_server
                     scores = [0, 0]
                 
                 if keys[K_q]:
