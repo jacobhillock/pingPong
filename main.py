@@ -17,27 +17,6 @@ from pygame import (
     RESIZABLE
 )
 
-config = {}
-loc = __file__.split("main.py")
-with open(f"{loc[0]}config.json") as file:
-    config = json.load(file)
-
-FPS = config.get("FPS", 30)
-height = config.get("height", 720)
-width = config.get("width", 1280)
-hWidth = int(width/2)
-size = width, height
-MAX_SCORE = config.get("win_score", 11)
-baseX = 10
-baseY = 10
-scale = config.get("scale", 5)
-if config.get("scaling_mode_auto", False):
-    scale = width * 30 / 1920
-
-init()
-pygame.font.init()
-my_font = pygame.font.SysFont('Nato Mono', config.get("font_size", 64))
-
 def get_segments(score1: int, score2: int):
     score1 = str(score1)
     if(len(score1) < 2):
@@ -65,122 +44,144 @@ def updateSize(resize):
     width = resize.w
     hWidth = int(width/2)
     size = width, height
-    if config.get("scaling_mode_auto", False):
-        scale = width * 30 / 1920
+    rescale()
 
-def main():
-    scores = [0, 0]
-    games = [0, 0]
-    display = pygame.display.set_mode(size, RESIZABLE)
-    black = pygame.Color(0, 0, 0)
+def rescale():
+    global scale
+    scaleH = height * 30 / 1080
+    scaleW = width  * 30 / 1920
+    scale = scaleW if scaleW < scaleH else scaleH
+
+
+config = {}
+loc = __file__.split("main.py")
+with open(f"{loc[0]}config.json") as file:
+    config = json.load(file)
+
+FPS = config.get("FPS", 30)
+height = config.get("height", 720)
+width = config.get("width", 1280)
+hWidth = int(width/2)
+size = width, height
+MAX_SCORE = config.get("win_score", 11)
+baseX = 10
+baseY = 10
+scale = 5
+
+init()
+pygame.font.init()
+my_font = pygame.font.SysFont('Nato Mono', config.get("font_size", 64))
+
+scores = [0, 0]
+games = [0, 0]
+display = pygame.display.set_mode(size, RESIZABLE)
+black = pygame.Color(0, 0, 0)
+display.fill(black)
+white = pygame.Color(255,255,255)
+start_server = random.choice([0,2])
+current_server = start_server
+change = False
+p1LEFT = True
+p1 = config.get('p1','Player 1')
+p2 = config.get('p2','Player 2')
+do_player_switching = config.get("do_player_switching", True)
+do_server_tracking = config.get("do_server_tracking", True)
+
+rescale ()
+while(True):
+    pygame.time.delay(int(1000/FPS))
     display.fill(black)
-    white = pygame.Color(255,255,255)
-    start_server = random.choice([0,2])
-    current_server = start_server
-    change = False
-    p1LEFT = True
-    p1 = config.get('p1','Player 1')
-    p2 = config.get('p2','Player 2')
-    do_player_switching = config.get("do_player_switching", True)
-    do_server_tracking = config.get("do_server_tracking", True)
-
-    while(True):
-        pygame.time.delay(int(1000/FPS))
-        display.fill(black)
-        for num in get_segments(scores[0], scores[1]):
-            for seg in num:
-                rect = pygame.Rect(
-                    int(seg[0]),
-                    int(seg[1]),
-                    int(seg[2]),
-                    int(seg[3])
-                )
-                pygame.draw.rect(display, white, rect)
-        
-        if do_server_tracking:
-            y_off = int(baseY + 27*scale)
-            if current_server % 4 == 0 or current_server % 4 == 1:
-                pygame.draw.rect(display, (0, 240, 60), pygame.Rect(0, y_off,hWidth,30))
-            else:
-                pygame.draw.rect(display, (0, 240, 60), pygame.Rect(hWidth, y_off,hWidth,30))
-        
-        textsurface1 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
-        textsurface2 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-        if do_player_switching and not p1LEFT:
-            textsurface1 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-            textsurface2 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
-        w1 = textsurface1.get_size()[0]
-        w2 = textsurface2.get_size()[0]
-        l1 = int(hWidth/2-w1/2)
-        l2 = int(3*hWidth/2-w2/2)
-        display.blit(
-            textsurface1,
-            (
-                int(l1),
-                int(baseY + 30*scale)
+    for num in get_segments(scores[0], scores[1]):
+        for seg in num:
+            rect = pygame.Rect(
+                int(seg[0]),
+                int(seg[1]),
+                int(seg[2]),
+                int(seg[3])
             )
+            pygame.draw.rect(display, white, rect)
+    
+    if do_server_tracking:
+        y_off = int(baseY + 27*scale)
+        if current_server % 4 == 0 or current_server % 4 == 1:
+            pygame.draw.rect(display, (0, 240, 60), pygame.Rect(0, y_off,hWidth,30))
+        else:
+            pygame.draw.rect(display, (0, 240, 60), pygame.Rect(hWidth, y_off,hWidth,30))
+    
+    textsurface1 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
+    textsurface2 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
+    if do_player_switching and not p1LEFT:
+        textsurface1 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
+        textsurface2 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
+    w1 = textsurface1.get_size()[0]
+    w2 = textsurface2.get_size()[0]
+    l1 = int(hWidth/2-w1/2)
+    l2 = int(3*hWidth/2-w2/2)
+    display.blit(
+        textsurface1,
+        (
+            int(l1),
+            int(baseY + 30*scale)
         )
-        display.blit(
-            textsurface2,
-            (
-                int(l2),
-                int(baseY + 30*scale)
-            )
+    )
+    display.blit(
+        textsurface2,
+        (
+            int(l2),
+            int(baseY + 30*scale)
         )
+    )
 
-        pygame.draw.rect(display, (255,255,255), pygame.Rect(hWidth-5,0,10,height))
-        pygame.display.update()
+    pygame.draw.rect(display, (255,255,255), pygame.Rect(hWidth-5,0,10,height))
+    pygame.display.update()
 
-        # EVENT LOOP
-        for event in pygame.event.get():
-            if event.type == VIDEORESIZE:
-                updateSize(event)
-                display = pygame.display.set_mode(size, RESIZABLE)
+    # EVENT LOOP
+    for event in pygame.event.get():
+        if event.type == VIDEORESIZE:
+            updateSize(event)
+            display = pygame.display.set_mode(size, RESIZABLE)
 
-            if event.type == KEYDOWN:
-                keys=pygame.key.get_pressed()
-                if keys[K_F1]:
-                    scores[0] -= 1
-                    current_server -= 1
-                elif keys[K_F2]:
-                    scores[0] += 1
-                    current_server += 1
-                elif keys[K_F11]:
-                    scores[1] -= 1
-                    current_server -= 1
-                elif keys[K_F12]:
-                    scores[1] += 1
-                    current_server += 1
-                
-                if keys[K_F6] or keys[K_F7]:
-                    if scores[0] >= MAX_SCORE or scores[1] >= MAX_SCORE:
-                        if p1LEFT or not do_player_switching:
-                            if scores[0] >= MAX_SCORE and scores[0] > scores[1]:
-                                games[0] += 1
-                            elif scores[1] >= MAX_SCORE:
-                                games[1] += 1
-                        else:
-                            if scores[0] >= MAX_SCORE and scores[0] > scores[1]:
-                                games[1] += 1
-                            elif scores[1] >= MAX_SCORE:
-                                games[0] += 1
-                        if not change and do_player_switching:
-                            p1LEFT = not p1LEFT
-                        else:
-                            start_server += 2
-                        start_server %= 4
-                        change = not change
+        if event.type == KEYDOWN:
+            keys=pygame.key.get_pressed()
+            if keys[K_F1]:
+                scores[0] -= 1
+                current_server -= 1
+            elif keys[K_F2]:
+                scores[0] += 1
+                current_server += 1
+            elif keys[K_F11]:
+                scores[1] -= 1
+                current_server -= 1
+            elif keys[K_F12]:
+                scores[1] += 1
+                current_server += 1
+            
+            if keys[K_F6] or keys[K_F7]:
+                if scores[0] >= MAX_SCORE or scores[1] >= MAX_SCORE:
+                    if p1LEFT or not do_player_switching:
+                        if scores[0] >= MAX_SCORE and scores[0] > scores[1]:
+                            games[0] += 1
+                        elif scores[1] >= MAX_SCORE:
+                            games[1] += 1
+                    else:
+                        if scores[0] >= MAX_SCORE and scores[0] > scores[1]:
+                            games[1] += 1
+                        elif scores[1] >= MAX_SCORE:
+                            games[0] += 1
+                    if not change and do_player_switching:
+                        p1LEFT = not p1LEFT
+                    else:
+                        start_server += 2
+                    start_server %= 4
+                    change = not change
 
-                    current_server = start_server
-                    scores = [0, 0]
-                
-                if keys[K_q]:
-                    sys.exit()
-
-            if event.type == QUIT:
+                current_server = start_server
+                scores = [0, 0]
+            
+            if keys[K_q]:
                 sys.exit()
-        # EVENT LOOP
 
+        if event.type == QUIT:
+            sys.exit()
+    # EVENT LOOP
 
-if __name__ == '__main__':
-    main()
