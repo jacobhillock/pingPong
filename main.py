@@ -17,24 +17,23 @@ from pygame import (
     RESIZABLE
 )
 
-def get_segments(score1: int, score2: int):
-    score1 = str(score1)
+def get_segments(scores):
+    score1 = str(scores[0])
     if(len(score1) < 2):
         score1 = "0" + score1
     
-    score2 = str(score2)
+    score2 = str(scores[1])
     if(len(score2) < 2):
         score2 = "0" + score2
 
     displays = []
 
-    sfe = int(width*.022) # spacing from the edge of the screen
-    np = int(.55*scale) # number padding
-    nw = 14*scale # number width
-    displays.append(seven_seg(score1[0], sfe, baseY, scale))
-    displays.append(seven_seg(score1[1], sfe + nw + np, baseY, scale))
-    displays.append(seven_seg(score2[0], width - (sfe + 2*nw + np), baseY, scale))
-    displays.append(seven_seg(score2[1], width - (sfe + nw), baseY, scale))
+    np  = int(.275*scale)  # number padding
+    nw  = 14*scale        # number width
+    displays.append(seven_seg(score1[-2], int(hWidth/2)   - (np+nw), baseY, scale))
+    displays.append(seven_seg(score1[-1], int(hWidth/2)   + (np)   , baseY, scale))
+    displays.append(seven_seg(score2[-2], int(3*hWidth/2) - (np+nw), baseY, scale))
+    displays.append(seven_seg(score2[-1], int(3*hWidth/2) + (np)   , baseY, scale))
 
     return displays
 
@@ -52,12 +51,15 @@ def rescale():
     scaleW = width  * 30 / 1920
     scale = scaleW if scaleW < scaleH else scaleH
 
+def load_config():
+    config = {}
+    loc = __file__.split("main.py")
+    with open(f"{loc[0]}config.json") as file:
+        config = json.load(file)
+    return config
 
-config = {}
-loc = __file__.split("main.py")
-with open(f"{loc[0]}config.json") as file:
-    config = json.load(file)
 
+config = load_config ()
 FPS = config.get("FPS", 30)
 height = config.get("height", 720)
 width = config.get("width", 1280)
@@ -91,7 +93,7 @@ rescale ()
 while(True):
     pygame.time.delay(int(1000/FPS))
     display.fill(black)
-    for num in get_segments(scores[0], scores[1]):
+    for num in get_segments(scores):
         for seg in num:
             rect = pygame.Rect(
                 int(seg[0]),
