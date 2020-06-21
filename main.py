@@ -12,7 +12,9 @@ from pygame import (
     K_F11,
     K_F12,
     K_q,
-    QUIT
+    QUIT,
+    VIDEORESIZE,
+    RESIZABLE
 )
 
 config = {}
@@ -57,10 +59,19 @@ def get_segments(score1: int, score2: int):
 
     return displays
 
+def updateSize(resize):
+    global height, width, hWidth, size, scale, config
+    height = resize.h
+    width = resize.w
+    hWidth = int(width/2)
+    size = width, height
+    if config.get("scaling_mode_auto", False):
+        scale = width * 30 / 1920
+
 def main():
     scores = [0, 0]
     games = [0, 0]
-    display = pygame.display.set_mode(size)
+    display = pygame.display.set_mode(size, RESIZABLE)
     black = pygame.Color(0, 0, 0)
     display.fill(black)
     white = pygame.Color(255,255,255)
@@ -98,17 +109,21 @@ def main():
         if do_player_switching and not p1LEFT:
             textsurface1 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
             textsurface2 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
+        w1 = textsurface1.get_size()[0]
+        w2 = textsurface2.get_size()[0]
+        l1 = int(hWidth/2-w1/2)
+        l2 = int(3*hWidth/2-w2/2)
         display.blit(
             textsurface1,
             (
-                int(baseX + 9*scale),
+                int(l1),
                 int(baseY + 30*scale)
             )
         )
         display.blit(
             textsurface2,
             (
-                int(baseX + 9*scale + hWidth*1.04),
+                int(l2),
                 int(baseY + 30*scale)
             )
         )
@@ -118,6 +133,10 @@ def main():
 
         # EVENT LOOP
         for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                updateSize(event)
+                display = pygame.display.set_mode(size, RESIZABLE)
+
             if event.type == KEYDOWN:
                 keys=pygame.key.get_pressed()
                 if keys[K_F1]:
