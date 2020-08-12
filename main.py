@@ -1,7 +1,8 @@
 #!venv/bin/python
+
 import pygame
 from seven_seg import seven_seg
-import sys, random, json, sys, os
+import sys, random, json, sys, os, time
 from pygame import (
     init,
     KEYDOWN,
@@ -38,7 +39,7 @@ def get_segments(scores):
     return displays
 
 def updateSize(resize):
-    global height, width, hWidth, size, scale, config
+    global height, width, hWidth, size, scale
     height = resize.h
     width = resize.w
     hWidth = int(width/2)
@@ -58,9 +59,13 @@ def load_config():
         config = json.load(file)
     return config
 
+def calc_delta(t0, t1, aim):
+    wait = aim - (t1 - t0)*1000
+    return int(wait)
 
 config = load_config ()
-FPS = config.get("FPS", 30)
+FPS = config.get("FPS", 15)
+delta = int(1000/FPS)
 height = config.get("height", 720)
 width = config.get("width", 1280)
 hWidth = int(width/2)
@@ -78,8 +83,9 @@ scores = [0, 0]
 games = [0, 0]
 display = pygame.display.set_mode(size, RESIZABLE)
 black = pygame.Color(0, 0, 0)
-display.fill(black)
 white = pygame.Color(255,255,255)
+
+display.fill(black)
 start_server = random.choice([0,2])
 current_server = start_server
 change = False
@@ -90,8 +96,10 @@ do_player_switching = config.get("do_player_switching", True)
 do_server_tracking = config.get("do_server_tracking", True)
 
 rescale ()
+t0 = t1 = 0
 while(True):
-    pygame.time.delay(int(1000/FPS))
+    pygame.time.delay(calc_delta(t0, t1, delta))
+    t0 = time.time()
     display.fill(black)
     for num in get_segments(scores):
         for seg in num:
@@ -185,5 +193,6 @@ while(True):
 
         if event.type == QUIT:
             sys.exit()
+    t1 = time.time()
     # EVENT LOOP
 
