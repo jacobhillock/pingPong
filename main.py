@@ -1,7 +1,10 @@
 #!venv/bin/python
 
 import pygame
-from seven_seg import seven_seg
+from src.seven_seg import seven_seg
+from src.textbox_pg import TextBox
+from src.button_pg import Button 
+from src.conf import Configurator
 import sys, random, json, sys, os, time
 from pygame import (
     init,
@@ -13,10 +16,13 @@ from pygame import (
     K_F11,
     K_F12,
     K_q,
+    K_c,
     QUIT,
     VIDEORESIZE,
     RESIZABLE
 )
+
+global config
 
 def get_segments(scores):
     score1 = str(scores[0])
@@ -29,76 +35,91 @@ def get_segments(scores):
 
     displays = []
 
-    np  = int(.275*scale)  # number padding
-    nw  = 14*scale        # number width
-    displays.append(seven_seg(score1[-2], int(hWidth/2)   - (np+nw), baseY, scale))
-    displays.append(seven_seg(score1[-1], int(hWidth/2)   + (np)   , baseY, scale))
-    displays.append(seven_seg(score2[-2], int(3*hWidth/2) - (np+nw), baseY, scale))
-    displays.append(seven_seg(score2[-1], int(3*hWidth/2) + (np)   , baseY, scale))
+    np  = int(.275*config.scale)  # number padding
+    nw  = 14*config.scale        # number width
+    displays.append(seven_seg(score1[-2], int(config.hWidth/2)   - (np+nw), config.baseY, config.scale))
+    displays.append(seven_seg(score1[-1], int(config.hWidth/2)   + (np)   , config.baseY, config.scale))
+    displays.append(seven_seg(score2[-2], int(3*config.hWidth/2) - (np+nw), config.baseY, config.scale))
+    displays.append(seven_seg(score2[-1], int(3*config.hWidth/2) + (np)   , config.baseY, config.scale))
 
     return displays
 
 def updateSize(resize):
-    global height, width, hWidth, size, scale
-    height = resize.h
-    width = resize.w
-    hWidth = int(width/2)
-    size = width, height
+    global config
+    config.height = resize.h
+    config.width = resize.w
+    config.hWidth = int(config.width/2)
+    config.size = config.width, config.height
     rescale()
 
 def rescale():
-    global scale
-    scaleH = height * 30 / 1080
-    scaleW = width  * 30 / 1920
-    scale = scaleW if scaleW < scaleH else scaleH
+    global config
+    scaleH = config.height * 30 / 1080
+    scaleW = config.width  * 30 / 1920
+    config.scale = scaleW if scaleW < scaleH else scaleH
 
 def load_config():
     config = {}
     loc = __file__.split("main.py")
     with open(f"{loc[0]}config.json") as file:
-        config = json.load(file)
+        config = Configurator(file)
     return config
+
+def reload():
+    pass
+
+def update_config(screen):
+    # screen = pygame.display.set_mode([300, 800])
+    # display.fill((0, 0, 0))
+    y = 20
+    with open("config.json") as file:
+        items = json.load(file)
+        boxs = []
+        for k in items.keys():
+            # print(f"{k}:{items[k]}")
+            boxs.append(TextBox(20, y, 150, 30, display, str(items[k]), k))
+            y += 40
+        
+        button = Button(20, y, 150, 30, display, text='Done')
+        done = False
+        while not done:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    done = True
+                for box in boxs:
+                    box.handle_event(event)
+                done = button.handle_event(event)
+
+            for box in boxs:
+                box.update()
+
+            display.fill((0, 0, 0))
+            for box in boxs+[button]:
+                box.draw(display)
+
 
 def calc_delta(t0, t1, aim):
     wait = aim - (t1 - t0)*1000
     return int(wait)
 
 config = load_config ()
-FPS = config.get("FPS", 15)
-delta = int(1000/FPS)
-height = config.get("height", 720)
-width = config.get("width", 1280)
-hWidth = int(width/2)
-size = width, height
-MAX_SCORE = config.get("win_score", 11)
-baseX = 10
-baseY = 10
-scale = 5
-
 init()
-pygame.font.init()
-my_font = pygame.font.SysFont('Nato Mono', config.get("font_size", 64))
+my_font = pygame.font.SysFont('Nato Mono', config.font_size)
 
 scores = [0, 0]
 games = [0, 0]
-display = pygame.display.set_mode(size, RESIZABLE)
+display = pygame.display.set_mode(config.size, RESIZABLE)
 black = pygame.Color(0, 0, 0)
 white = pygame.Color(255,255,255)
 
-display.fill(black)
 start_server = random.choice([0,2])
 current_server = start_server
 change = False
 p1LEFT = True
-p1 = config.get('p1','Player 1')
-p2 = config.get('p2','Player 2')
-do_player_switching = config.get("do_player_switching", True)
-do_server_tracking = config.get("do_server_tracking", True)
-
 rescale ()
 t0 = t1 = 0
 while(True):
-    pygame.time.delay(calc_delta(t0, t1, delta))
+    pygame.time.delay(calc_delta(t0, t1, config.delta))
     t0 = time.time()
     display.fill(black)
     for num in get_segments(scores):
@@ -111,45 +132,49 @@ while(True):
             )
             pygame.draw.rect(display, white, rect)
     
-    if do_server_tracking:
-        y_off = int(baseY + 27*scale)
+    if config.do_server_tracking:
+        y_off = int(config.baseY + 27*config.scale)
         if current_server % 4 == 0 or current_server % 4 == 1:
-            pygame.draw.rect(display, (0, 240, 60), pygame.Rect(0, y_off,hWidth,30))
+            pygame.draw.rect(display, (0, 240, 60), pygame.Rect(0, y_off,config.hWidth,30))
         else:
-            pygame.draw.rect(display, (0, 240, 60), pygame.Rect(hWidth, y_off,hWidth,30))
+            pygame.draw.rect(display, (0, 240, 60), pygame.Rect(config.hWidth, y_off,config.hWidth,30))
     
-    textsurface1 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
-    textsurface2 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-    if do_player_switching and not p1LEFT:
-        textsurface1 = my_font.render(f"{p2} score {games[1]}", True, (255,255,255))
-        textsurface2 = my_font.render(f"{p1} score {games[0]}", True, (255,255,255))
+    # TODO: Left string and right string
+    left_string = f"{config.p1} score {games[0]}"
+    right_string = f"{config.p2} score {games[1]}"
+    if config.do_player_switching and not p1LEFT:
+        left_string = f"{config.p2} score {games[1]}"
+        right_string = f"{config.p1} score {games[0]}"
+    textsurface1 = my_font.render(left_string, True, (255,255,255))
+    textsurface2 = my_font.render(right_string, True, (255,255,255))
+
     w1 = textsurface1.get_size()[0]
     w2 = textsurface2.get_size()[0]
-    l1 = int(hWidth/2-w1/2)
-    l2 = int(3*hWidth/2-w2/2)
+    l1 = int(config.hWidth/2-w1/2)
+    l2 = int(3*config.hWidth/2-w2/2)
     display.blit(
         textsurface1,
         (
             int(l1),
-            int(baseY + 30*scale)
+            int(config.baseY + 30*config.scale)
         )
     )
     display.blit(
         textsurface2,
         (
             int(l2),
-            int(baseY + 30*scale)
+            int(config.baseY + 30*config.scale)
         )
     )
 
-    pygame.draw.rect(display, (255,255,255), pygame.Rect(hWidth-5,0,10,height))
+    pygame.draw.rect(display, (255,255,255), pygame.Rect(config.hWidth-5,0,10,config.height))
     pygame.display.update()
 
     # EVENT LOOP
     for event in pygame.event.get():
         if event.type == VIDEORESIZE:
             updateSize(event)
-            display = pygame.display.set_mode(size, RESIZABLE)
+            display = pygame.display.set_mode(config.size, RESIZABLE)
 
         if event.type == KEYDOWN:
             keys=pygame.key.get_pressed()
@@ -167,18 +192,18 @@ while(True):
                 current_server += 1
             
             if keys[K_F6] or keys[K_F7]:
-                if scores[0] >= MAX_SCORE or scores[1] >= MAX_SCORE:
-                    if p1LEFT or not do_player_switching:
-                        if scores[0] >= MAX_SCORE and scores[0] > scores[1]:
+                if scores[0] >= config.MAX_SCORE or scores[1] >= config.MAX_SCORE:
+                    if p1LEFT or not config.do_player_switching:
+                        if scores[0] >= config.MAX_SCORE and scores[0] > scores[1]:
                             games[0] += 1
-                        elif scores[1] >= MAX_SCORE:
+                        elif scores[1] >= config.MAX_SCORE:
                             games[1] += 1
                     else:
-                        if scores[0] >= MAX_SCORE and scores[0] > scores[1]:
+                        if scores[0] >= config.MAX_SCORE and scores[0] > scores[1]:
                             games[1] += 1
-                        elif scores[1] >= MAX_SCORE:
+                        elif scores[1] >= config.MAX_SCORE:
                             games[0] += 1
-                    if not change and do_player_switching:
+                    if not change and config.do_player_switching:
                         p1LEFT = not p1LEFT
                     else:
                         start_server += 2
@@ -190,6 +215,9 @@ while(True):
             
             if keys[K_q]:
                 sys.exit()
+            
+            # if keys[K_c]:
+            #     update_config(display)
 
         if event.type == QUIT:
             sys.exit()
