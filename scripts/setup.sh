@@ -1,5 +1,6 @@
 #!/bin/bash
 DIR='./venv'
+cd ..
 if [ -d "$DIR" ];
 else
 echo "creating venv"
@@ -9,4 +10,4 @@ fi
 echo "Updating venv packages"
 venv/bin/pip install -r requirements.txt
 
-echo "Ready to play"
+echo "Ready to use"
