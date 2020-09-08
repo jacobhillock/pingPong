@@ -37,55 +37,57 @@ def get_segments(scores):
 
     np  = int(.275*config.scale)  # number padding
     nw  = 14*config.scale        # number width
-    displays.append(seven_seg(score1[-2], int(config.hWidth/2)   - (np+nw), config.baseY, config.scale))
-    displays.append(seven_seg(score1[-1], int(config.hWidth/2)   + (np)   , config.baseY, config.scale))
-    displays.append(seven_seg(score2[-2], int(3*config.hWidth/2) - (np+nw), config.baseY, config.scale))
-    displays.append(seven_seg(score2[-1], int(3*config.hWidth/2) + (np)   , config.baseY, config.scale))
+    displays += seven_seg(score1[-2], int(config.hWidth/2)   - (np+nw), config.padding, config.scale)
+    displays += seven_seg(score1[-1], int(config.hWidth/2)   + (np)   , config.padding, config.scale)
+    displays += seven_seg(score2[-2], int(3*config.hWidth/2) - (np+nw), config.padding, config.scale)
+    displays += seven_seg(score2[-1], int(3*config.hWidth/2) + (np)   , config.padding, config.scale)
 
     return displays
 
 def updateSize(resize):
     global config
-    config.height = resize.h
-    config.width = resize.w
-    config.hWidth = int(config.width/2)
-    config.size = config.width, config.height
+    config.size = resize.w, resize.h
+    config.hWidth = int(resize.w/2)
     rescale()
 
 def rescale():
     global config
-    scaleH = config.height * 30 / 1080
-    scaleW = config.width  * 30 / 1920
+    scaleH = config.size[1] * 30 / 1080
+    scaleW = config.size[0]  * 30 / 1920
     config.scale = scaleW if scaleW < scaleH else scaleH
 
 def load_config():
-    config = {}
+    global config
     loc = __file__.split("main.py")
     with open(f"{loc[0]}config.json") as file:
         config = Configurator(file)
-    return config
 
-def reload():
-    pass
+def clean(items):
+    items["win_score"] = int(items["win_score"])
+    if items["do_player_switching"].lower() == 'false':
+        items["do_player_switching"] = False
+    else:
+        items["do_player_switching"] = True
+    return items
 
 def update_config(screen):
-    # screen = pygame.display.set_mode([300, 800])
-    # display.fill((0, 0, 0))
+    global config
     y = 20
-    with open("config.json") as file:
+    with open("config.json", "r+") as file:
         items = json.load(file)
         boxs = []
         for k in items.keys():
             # print(f"{k}:{items[k]}")
             boxs.append(TextBox(20, y, 150, 30, display, str(items[k]), k))
-            y += 40
+            y += 75
         
         button = Button(20, y, 150, 30, display, text='Done')
         done = False
+        clock = pygame.time.Clock()
         while not done:
             for event in pygame.event.get():
                 if event.type == QUIT:
-                    done = True
+                    sys.exit()
                 for box in boxs:
                     box.handle_event(event)
                 done = button.handle_event(event)
@@ -96,13 +98,31 @@ def update_config(screen):
             display.fill((0, 0, 0))
             for box in boxs+[button]:
                 box.draw(display)
+            
+            pygame.display.flip()
+            clock.tick(30)
+        
+        # take new config items from boxs
+        for box in boxs:
+            items[box.title] = box.text
+        # clean up items
+        items = clean(items)
 
+        # update config
+        config.update(items)
+
+        # update config file
+        file.seek(0)
+        file.write(json.dumps(items))
+        file.truncate()
 
 def calc_delta(t0, t1, aim):
     wait = aim - (t1 - t0)*1000
     return int(wait)
 
-config = load_config ()
+# Main program start
+# TODO: make def main()
+load_config ()
 init()
 my_font = pygame.font.SysFont('Nato Mono', config.font_size)
 
@@ -122,29 +142,27 @@ while(True):
     pygame.time.delay(calc_delta(t0, t1, config.delta))
     t0 = time.time()
     display.fill(black)
-    for num in get_segments(scores):
-        for seg in num:
-            rect = pygame.Rect(
-                int(seg[0]),
-                int(seg[1]),
-                int(seg[2]),
-                int(seg[3])
-            )
-            pygame.draw.rect(display, white, rect)
+    for seg in get_segments(scores):
+        rect = pygame.Rect(
+            int(seg[0]),
+            int(seg[1]),
+            int(seg[2]),
+            int(seg[3])
+        )
+        pygame.draw.rect(display, white, rect)
     
-    if config.do_server_tracking:
-        y_off = int(config.baseY + 27*config.scale)
-        if current_server % 4 == 0 or current_server % 4 == 1:
-            pygame.draw.rect(display, (0, 240, 60), pygame.Rect(0, y_off,config.hWidth,30))
-        else:
-            pygame.draw.rect(display, (0, 240, 60), pygame.Rect(config.hWidth, y_off,config.hWidth,30))
+    y_off = int(config.padding + 27*config.scale)
+    if current_server % 4 == 0 or current_server % 4 == 1:
+        pygame.draw.rect(display, (0, 240, 60), pygame.Rect(0, y_off,config.hWidth,30))
+    else:
+        pygame.draw.rect(display, (0, 240, 60), pygame.Rect(config.hWidth, y_off,config.hWidth,30))
     
     # TODO: Left string and right string
-    left_string = f"{config.p1} score {games[0]}"
-    right_string = f"{config.p2} score {games[1]}"
+    left_string = f"{config.p[0]} score {games[0]}"
+    right_string = f"{config.p[1]} score {games[1]}"
     if config.do_player_switching and not p1LEFT:
-        left_string = f"{config.p2} score {games[1]}"
-        right_string = f"{config.p1} score {games[0]}"
+        left_string = f"{config.p[1]} score {games[1]}"
+        right_string = f"{config.p[0]} score {games[0]}"
     textsurface1 = my_font.render(left_string, True, (255,255,255))
     textsurface2 = my_font.render(right_string, True, (255,255,255))
 
@@ -156,18 +174,18 @@ while(True):
         textsurface1,
         (
             int(l1),
-            int(config.baseY + 30*config.scale)
+            int(config.padding + 30*config.scale)
         )
     )
     display.blit(
         textsurface2,
         (
             int(l2),
-            int(config.baseY + 30*config.scale)
+            int(config.padding + 30*config.scale)
         )
     )
 
-    pygame.draw.rect(display, (255,255,255), pygame.Rect(config.hWidth-5,0,10,config.height))
+    pygame.draw.rect(display, (255,255,255), pygame.Rect(config.hWidth-5,0,10,config.size[1]))
     pygame.display.update()
 
     # EVENT LOOP
@@ -216,8 +234,8 @@ while(True):
             if keys[K_q]:
                 sys.exit()
             
-            # if keys[K_c]:
-            #     update_config(display)
+            if keys[K_c]:
+                update_config(display)
 
         if event.type == QUIT:
             sys.exit()
