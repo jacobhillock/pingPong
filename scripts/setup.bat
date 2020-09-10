@@ -2,7 +2,7 @@ cd %~dp0
 cd ..
 IF NOT EXIST "venv\" (
     echo "creating venv"
-    python -m venv venv
+    py -m venv venv
 )
 
 mkdir .private
