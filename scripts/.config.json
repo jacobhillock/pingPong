@@ -1,1 +1,6 @@
-{"win_score": 11, "do_player_switching": true, "p1": "Player 1", "p2": "Player 2"}
+{
+    "win_score": 11,
+    "do_player_switching": true,
+    "p1": "Player 1",
+    "p2": "Player 2"
+}

@@ -22,7 +22,9 @@ from pygame import (
     RESIZABLE
 )
 
-global config
+global config, conf_loc
+loc = __file__.split("main.py")
+conf_loc = os.path.join(loc[0], ".private", "config.json")
 
 def get_segments(scores):
     score1 = str(scores[0])
@@ -57,9 +59,8 @@ def rescale():
     config.scale = scaleW if scaleW < scaleH else scaleH
 
 def load_config():
-    global config
-    loc = __file__.split("main.py")
-    with open(f"{loc[0]}config.json") as file:
+    global config, conf_loc
+    with open(conf_loc) as file:
         config = Configurator(file)
 
 def clean(items):
@@ -73,7 +74,7 @@ def clean(items):
 def update_config(screen):
     global config
     y = 20
-    with open("config.json", "r+") as file:
+    with open(conf_loc, "r+") as file:
         items = json.load(file)
         boxs = []
         for k in items.keys():
@@ -113,7 +114,7 @@ def update_config(screen):
 
         # update config file
         file.seek(0)
-        file.write(json.dumps(items))
+        file.write(json.dumps(items, indent=4))
         file.truncate()
 
 def calc_delta(t0, t1, aim):
