@@ -1,13 +1,15 @@
 #!/bin/bash
 DIR='./venv'
-cd ..
+cd "${0%/*/*}"
+
 if [ -d "$DIR" ];
 else
 echo "creating venv"
 python -m venv venv
 fi
 
-cp -i scripts/.config.json config.json
+mkdir .private
+cp -i scripts/.config.json .private/config.json
 
 echo "Updating venv packages"
 venv/bin/pip install -r requirements.txt
