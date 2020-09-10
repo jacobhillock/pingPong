@@ -6,7 +6,7 @@ IF NOT EXIST "venv\" (
 )
 
 mkdir .private
-xcopy /f /y "scripts\.config.json" ".private\config.json"
+echo f | xcopy /f /y "scripts\.config.json" ".private\config.json"
 
 echo "Updating venv packages"
 "venv\Scripts\pip.exe" install -r requirements.txt
